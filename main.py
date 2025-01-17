@@ -21,9 +21,11 @@ class Main:
         
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
         
+        lower_w = np.array([100,0,40])
+        upper_w = np.array([150,255,110])
     
-        lower_blue = np.array([90,64,0])
-        upper_blue = np.array([150,255,255])
+        lower_green = np.array([60,64,0])
+        upper_green = np.array([90,255,255])
         
         lower_y = np.array([20,90,0])
         upper_y = np.array([45,255,255])
@@ -39,12 +41,27 @@ class Main:
         
         mask_y = cv2.inRange(hsv, lower_y, upper_y)
         
-        mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+        mask_green = cv2.inRange(hsv, lower_green, upper_green)
+        mask_w = cv2.inRange(hsv, lower_w, upper_w)
+
         
         # maskdata = cv2.bitwise_or(mask_red, mask_blue)
 
         self.x_data = []
         self.y_data = []
+
+        self.mask = cv2.bitwise_and(self.image, self.image, mask=mask_w)
+        contours, hierarchy = cv2.findContours(
+        mask_w, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = list(filter(lambda x: cv2.contourArea(x) > 15000, contours))#小さいの削除
+        cv2.drawContours(self.image, contours, -1, color=(0, 0, 255), thickness=2)
+        # for i in contours
+        if len(contours)>0:
+            x, y, w, h = cv2.boundingRect(contours[0])
+            self.x_data.append(x)
+            self.y_data.append(y)
+        else:
+            print("no_w")
         
         self.mask = cv2.bitwise_and(self.image, self.image, mask=mask_red)
         contours, hierarchy = cv2.findContours(
@@ -57,9 +74,9 @@ class Main:
         self.y_data.append(y)
         
             
-        self.mask = cv2.bitwise_and(self.image, self.image, mask=mask_blue)
+        self.mask = cv2.bitwise_and(self.image, self.image, mask=mask_green)
         contours, hierarchy = cv2.findContours(
-        mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        mask_green, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = list(filter(lambda x: cv2.contourArea(x) > 15000, contours))#小さいの削除
         cv2.drawContours(self.image, contours, -1, color=(0, 0, 255), thickness=2)
         # for i in contours:
@@ -78,16 +95,18 @@ class Main:
         self.y_data.append(y)
 
     def hantei(self,i) -> str:
-        if i==0:return "y"
-        elif i==1:return "b"
-        elif i==2:return "r"
-        
+        if i==0:return "w"
+        elif i==1:return "r"
+        elif i==2:return "g"
+        elif i==3:return "y"
+
         
     def mainloop(self) -> None:
+        print(self.x_data)
         sort_data = list(self.x_data)
         sort_data.sort()
 
-        end_data=["","","",]
+        end_data=["","","",""]
 
 
 
@@ -99,7 +118,12 @@ class Main:
                 end_data[1] = self.hantei(i)
                 
             elif sort_data[2] == self.x_data[i]:
-                end_data[2] = self.hantei(i)  
+                end_data[2] = self.hantei(i)
+                
+            elif sort_data[3] == self.x_data[i]:
+                end_data[3] = self.hantei(i)
+                
+        print(end_data)
                 
 
         cv2.namedWindow("image", cv2.WINDOW_NORMAL)
