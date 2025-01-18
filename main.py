@@ -21,8 +21,8 @@ class Main:
         
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
         
-        lower_w = np.array([100,0,40])
-        upper_w = np.array([150,255,110])
+        lower_w = np.array([75,0,70])
+        upper_w = np.array([140,255,135])
     
         lower_green = np.array([60,64,0])
         upper_green = np.array([90,255,255])
@@ -53,15 +53,17 @@ class Main:
         self.mask = cv2.bitwise_and(self.image, self.image, mask=mask_w)
         contours, hierarchy = cv2.findContours(
         mask_w, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = list(filter(lambda x: cv2.contourArea(x) > 15000, contours))#小さいの削除
+        contours = list(filter(lambda x: cv2.contourArea(x) > 8000, contours))#小さいの削除
         cv2.drawContours(self.image, contours, -1, color=(0, 0, 255), thickness=2)
-        # for i in contours
-        if len(contours)>0:
-            x, y, w, h = cv2.boundingRect(contours[0])
-            self.x_data.append(x)
-            self.y_data.append(y)
-        else:
-            print("no_w")
+        data = []
+        self.w_data_x = []
+        print(len(contours))
+        for i in range(len(contours)):
+            x, y, w, h = cv2.boundingRect(contours[i])
+            data.append(w*h)
+            self.w_data_x.append(x)
+            
+            
         
         self.mask = cv2.bitwise_and(self.image, self.image, mask=mask_red)
         contours, hierarchy = cv2.findContours(
@@ -95,18 +97,16 @@ class Main:
         self.y_data.append(y)
 
     def hantei(self,i) -> str:
-        if i==0:return "w"
-        elif i==1:return "r"
-        elif i==2:return "g"
-        elif i==3:return "y"
+        if i==0:return "r"
+        elif i==1:return "g"
+        elif i==2:return "y"
 
         
     def mainloop(self) -> None:
-        print(self.x_data)
         sort_data = list(self.x_data)
         sort_data.sort()
 
-        end_data=["","","",""]
+        end_data=["","",""]
 
 
 
@@ -120,10 +120,51 @@ class Main:
             elif sort_data[2] == self.x_data[i]:
                 end_data[2] = self.hantei(i)
                 
-            elif sort_data[3] == self.x_data[i]:
-                end_data[3] = self.hantei(i)
+
                 
-        print(end_data)
+        print(end_data,self.w_data_x,self.x_data)
+        low_list = []
+        low_place_list = []
+        
+        for i in range(len(self.w_data_x)):
+            best_low = 0
+            best_low_place = 0
+            sa = 0
+            for j in range(len(self.x_data)):
+                if best_low < abs(self.w_data_x[i] - self.x_data[j]):
+                    best_low = abs(self.w_data_x[i] - self.x_data[j])
+                    best_low_place = i
+
+            low_list.append(best_low)
+            low_place_list.append(best_low_place)
+        print(low_list,low_place_list)
+        
+        sort_low_list = list(low_list)
+        sort_low_list.sort()
+        print(sort_low_list,"sort")
+        
+        for i in range(len(low_list)):
+            if low_list[i] == sort_low_list[3]:
+                print(3 - i)
+                white_i = 3 - i
+                
+        hantei = []
+        yn = "n"
+        for i in range(len(end_data) + 1):
+            if i == white_i:
+                hantei.append("w")
+                yn = "y"
+            else:
+                if yn == "n":
+                    hantei.append(end_data[i])
+                else:
+                    hantei.append(end_data[i - 1])
+        print(hantei)
+            
+        
+                
+            
+                
                 
 
         cv2.namedWindow("image", cv2.WINDOW_NORMAL)
